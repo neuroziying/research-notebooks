@@ -80,16 +80,15 @@ from scipy.spatial import ConvexHull
 
 
 '''
-# 假定你已有：
-# S (n_neurons, n_bins) 或 spikes (n_neurons, n_timepoints)
-# 我用 X_feat 代表用于聚类的高维特征（例如 X_pca_noPC1 或 X_pca）
+# 原始输入为 S (n_neurons, n_bins) 和 spikes (n_neurons, n_timepoints)
+# 用 X_feat 代表用于聚类的高维特征（例如 X_pca_noPC1 或 X_pca）
 # 以及原始标准化矩阵 X_scaled (n_neurons, n_features)
 
-# ---------- 1. 在高维做聚类（示例使用 X_pca，n_components=10）
+# ---------- 1. 在高维做聚类（ X_pca，n_components=10）
 pca_for_cluster = PCA(n_components=10, random_state=0)
-X_pca = pca_for_cluster.fit_transform(X_scaled)  # 或 X_pca 已有时跳过
+X_pca = pca_for_cluster.fit_transform(X_scaled)  
 
-k = 3  # 或用 silhouette 选的 best_k
+k = 3  # 或用 silhouette 选的 best_k ？
 km = KMeans(n_clusters=k, n_init=50, random_state=0).fit(X_pca)
 labels = km.labels_
 
@@ -97,14 +96,14 @@ labels = km.labels_
 pca2 = PCA(n_components=2, random_state=0)
 X_pca2 = pca2.fit_transform(X_scaled)  # 也可以直接 X_pca[:, :2] 如果同一 PCA
 
-# 绘图：每个簇一种颜色
+# 画图：每个簇一种颜色
 plt.figure(figsize=(6,5))
 scatter = plt.scatter(X_pca2[:,0], X_pca2[:,1], c=labels, cmap='tab10', s=60, alpha=0.9)
 plt.xlabel('PC1'); plt.ylabel('PC2'); plt.title('Clusters projected on PC1-PC2')
 #plt.colorbar(scatter, ticks=range(k), label='cluster id')
 plt.grid(alpha=0.2)
 
-# 可选：绘制每个簇的凸包（更直观地看分布）
+# 画每个簇的凸包络线
 for c in np.unique(labels):
     idx = np.where(labels==c)[0]
     if len(idx) >= 3:
@@ -134,7 +133,7 @@ for c in np.unique(outliers):
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.show()
 
-# ---------- 4. 每个簇在原始时间序列上的平均曲线（关键讲图）
+# ---------- 4. 每个簇在原始时间序列上的平均曲线
 for c in np.unique(labels):
     idx = np.where(labels==c)[0]
     print(f"Cluster {c}: neuron indices = {idx}")
@@ -163,7 +162,7 @@ plt.legend(); plt.title('ok firing (binned S)'); plt.xlabel('time bin')
 output_path = os.path.join(folder_path, f'firing_plot{5}.png')
 plt.savefig(output_path, dpi=300, bbox_inches='tight')
 plt.show()
-# # ---------- 5. 若想比较 UMAP 投影（仅可视化对照）
+# # ---------- 5. 比较 UMAP 投影 -----------
 # import umap
 # reducer = umap.UMAP(random_state=0)
 # X_umap = reducer.fit_transform(X_pca)   # 注意：fit on same features used for clustering
@@ -200,7 +199,7 @@ plt.scatter(X_noPC1[:,0], X_noPC1[:,1], c=labels23, cmap='tab10', s=60, alpha=0.
 plt.scatter(X_noPC1[outliers,0], X_noPC1[outliers,1], facecolors='none', edgecolors='r', s=120, linewidths=2, label='outliers')
 plt.legend(); plt.title('PC2-PC3 with outliers highlighted'); plt.show()
 
-# ---------- 4. 每个簇在原始时间序列上的平均曲线（关键讲图）
+# ---------- 4. 每个簇在原始时间序列上的平均曲线 --------------
 
 
 for c in np.unique(labels23):
@@ -222,7 +221,7 @@ output_path = os.path.join(folder_path, f'23firing_plot{5}.png')
 plt.savefig(output_path, dpi=300, bbox_inches='tight')
 plt.show()
 
-# ---------- 6. 局部保持度（可选；给组会一个数字说明保真度）
+# ---------- 6. 局部保持度 -----------------
 def local_preservation(orig_X, proj_X, k=10):
     nbr_orig = NearestNeighbors(n_neighbors=k+1).fit(orig_X)
     nbr_proj = NearestNeighbors(n_neighbors=k+1).fit(proj_X)
@@ -435,3 +434,4 @@ for c in np.unique(labels_km):
 plt.legend()
 plt.title("不同 cluster 的平均 firing rate")
 plt.show()
+
